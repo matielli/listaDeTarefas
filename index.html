@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>To-Do List — Trabalho</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --primary:#2563eb;
+      --muted:#6b7280;
+      --success:#16a34a;
+      --danger:#ef4444;
+      --glass: rgba(0,0,0,0.04);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,var(--bg),#eef2ff);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .app{
+      width:100%;
+      max-width:880px;
+      background:var(--card);
+      border-radius:12px;
+      box-shadow:0 8px 30px rgba(2,6,23,0.08);
+      overflow:hidden;
+    }
+    header{
+      padding:20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--glass);
+    }
+    header h1{font-size:20px;margin:0;}
+    header p{margin:0;color:var(--muted);font-size:13px;}
+    .main{
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:18px;
+      padding:18px;
+    }
+    @media (max-width:880px){
+      .main{grid-template-columns:1fr; padding:14px;}
+    }
+    .card{
+      background:linear-gradient(180deg,#fff,#fbfdff);
+      border-radius:10px;
+      padding:14px;
+      box-shadow: 0 2px 8px rgba(16,24,40,0.03);
+    }
+    .new-task{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .new-task input[type="text"]{
+      flex:1;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #e6eef8;
+      font-size:14px;
+    }
+    .btn{
+      background:var(--primary);
+      color:white;
+      border:none;
+      padding:10px 12px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .btn.ghost{
+      background:transparent;
+      color:var(--primary);
+      border:1px solid var(--primary);
+    }
+    .list{
+      margin-top:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:56vh;
+      overflow:auto;
+      padding-right:6px;
+    }
+    .task{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid rgba(10,20,40,0.03);
+    }
+    .task .title{flex:1;font-size:15px;}
+    .task.completed .title{
+      text-decoration:line-through;
+      color:var(--muted);
+    }
+    .small{
+      font-size:13px;color:var(--muted);
+    }
+    .actions button{
+      background:transparent;border:0;padding:6px;border-radius:6px;cursor:pointer;
+    }
+    .chip{
+      display:inline-block;padding:6px 8px;border-radius:999px;border:1px solid var(--glass);font-size:13px;margin-bottom:6px;
+    }
+    footer{
+      padding:12px 18px;border-top:1px solid var(--glass);display:flex;justify-content:space-between;align-items:center;
+    }
+    .empty{
+      padding:18px;text-align:center;color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Aplicativo To-Do">
+    <header>
+      <div>
+        <h1>To-Do List</h1>
+        <p>Trabalho — funcionalidades mínimas: adicionar, concluir, remover</p>
+      </div>
+      <div class="small">Estado local • Salva automaticamente</div>
+    </header>
+
+    <div class="main">
+      <section class="card" aria-labelledby="tasks-title">
+        <h2 id="tasks-title" class="small">Tarefas</h2>
+
+        <div class="new-task" style="margin-top:8px;">
+          <input id="task-input" type="text" placeholder="Nova tarefa — descreva rapidamente" aria-label="Nova tarefa">
+          <button id="add-btn" class="btn">Adicionar</button>
+        </div>
+
+        <div class="list" id="task-list" aria-live="polite" style="margin-top:12px;"></div>
+
+        <div id="empty" class="empty" style="display:none;">Nenhuma tarefa. Adicione a primeira acima ✨</div>
+      </section>
+
+      <aside class="card" aria-labelledby="info-title">
+        <h3 id="info-title" class="small">Informações</h3>
+        <p class="small" style="margin-top:8px;">
+          Use os botões ao lado de cada tarefa para marcar como concluída ou remover.
+        </p>
+
+        <div style="margin-top:12px;">
+          <div class="chip" id="total-chip">Total: 0</div>
+          <div class="chip" id="done-chip">Concluídas: 0</div>
+        </div>
+
+        <div style="margin-top:14px; display:flex; gap:8px; flex-direction:column;">
+          <button id="clear-done" class="btn ghost" aria-label="Remover concluídas">Remover concluídas</button>
+          <button id="clear-all" class="btn ghost" aria-label="Remover todas">Remover todas</button>
+          <button id="export-json" class="btn" aria-label="Exportar JSON">Exportar JSON</button>
+        </div>
+
+        <div style="margin-top:14px;">
+          <p class="small"><strong>Dica:</strong> antes de apagar tudo, exporte se quiser salvar.</p>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      <div class="small">Feito por: Seu Nome — Entregar no Classroom</div>
+      <div class="small">Data de entrega: <strong>repare no prazo da disciplina</strong></div>
+    </footer>
+  </div>
+
+  <script>
+    
+    const STORAGE_KEY = 'todo_trabalho_tasks_v1';
+    const taskInput = document.getElementById('task-input');
+    const addBtn = document.getElementById('add-btn');
+    const listEl = document.getElementById('task-list');
+    const emptyEl = document.getElementById('empty');
+    const totalChip = document.getElementById('total-chip');
+    const doneChip = document.getElementById('done-chip');
+    const clearDone = document.getElementById('clear-done');
+    const clearAll = document.getElementById('clear-all');
+    const exportJSON = document.getElementById('export-json');
+
+    let tasks = [];
+
+    function save(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      renderChips();
+    }
+    function load(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        tasks = raw ? JSON.parse(raw) : [];
+      }catch(e){ tasks = []; }
+    }
+    function renderChips(){
+      totalChip.textContent = 'Total: ' + tasks.length;
+      doneChip.textContent = 'Concluídas: ' + tasks.filter(t=>t.done).length;
+    }
+
+    function render(){
+      listEl.innerHTML = '';
+      if(tasks.length === 0){
+        emptyEl.style.display = 'block';
+      } else {
+        emptyEl.style.display = 'none';
+      }
+
+      tasks.forEach(task=>{
+        const item = document.createElement('div');
+        item.className = 'task' + (task.done ? ' completed' : '');
+        item.setAttribute('data-id', task.id);
+
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = task.done;
+        chk.addEventListener('change', ()=> toggleDone(task.id));
+
+        const title = document.createElement('div');
+        title.className = 'title';
+        title.textContent = task.title;
+
+        const meta = document.createElement('div');
+        meta.className = 'small';
+        const created = new Date(task.createdAt).toLocaleString();
+        meta.textContent = created;
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        actions.style.display = 'flex';
+        actions.style.gap = '6px';
+        const delBtn = document.createElement('button');
+        delBtn.title = 'Remover';
+        delBtn.innerHTML = '🗑️';
+        delBtn.addEventListener('click', ()=> removeTask(task.id));
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.title = task.done ? 'Marcar não concluída' : 'Marcar concluída';
+        toggleBtn.innerHTML = task.done ? '↩️' : '✅';
+        toggleBtn.addEventListener('click', ()=> toggleDone(task.id));
+
+        actions.appendChild(toggleBtn);
+        actions.appendChild(delBtn);
+
+        item.appendChild(chk);
+        item.appendChild(title);
+        item.appendChild(meta);
+        item.appendChild(actions);
+
+        listEl.appendChild(item);
+      });
+
+      renderChips();
+    }
+
+    function addTask(title){
+      const trimmed = String(title || '').trim();
+      if(!trimmed) return false;
+      const newTask = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        title: trimmed,
+        done: false,
+        createdAt: new Date().toISOString()
+      };
+      tasks.unshift(newTask);
+      save();
+      render();
+      return true;
+    }
+
+    function removeTask(id){
+      tasks = tasks.filter(t=>t.id !== id);
+      save(); render();
+    }
+    function toggleDone(id){
+      const t = tasks.find(x=>x.id===id);
+      if(!t) return;
+      t.done = !t.done;
+      save(); render();
+    }
+
+    addBtn.addEventListener('click', ()=> {
+      if(addTask(taskInput.value)){
+        taskInput.value = '';
+        taskInput.focus();
+      } else {
+        taskInput.focus();
+      }
+    });
+    taskInput.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ addBtn.click(); }
+    });
+
+    clearDone.addEventListener('click', ()=>{
+      if(confirm('Remover todas as tarefas concluídas?')){
+        tasks = tasks.filter(t=>!t.done);
+        save(); render();
+      }
+    });
+    clearAll.addEventListener('click', ()=>{
+      if(confirm('Remover TODAS as tarefas? Esta ação não pode ser desfeita.')){
+        tasks = [];
+        save(); render();
+      }
+    });
+
+    exportJSON.addEventListener('click', ()=>{
+      const dataStr = JSON.stringify(tasks, null, 2);
+      const blob = new Blob([dataStr], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'tarefas_export_' + new Date().toISOString().slice(0,19).replace(/[:T]/g,'-') + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+   
+    load();
+    render();
+  </script>
+</body>
+</html>
